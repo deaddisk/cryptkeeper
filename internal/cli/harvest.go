@@ -13,10 +13,14 @@ import (
 	"cryptkeeper/internal/core"
 	"cryptkeeper/internal/modules/sysinfo"
 	"cryptkeeper/internal/modules/win_amcache"
+	"cryptkeeper/internal/modules/win_bits"
 	"cryptkeeper/internal/modules/win_evtx"
 	"cryptkeeper/internal/modules/win_jumplists"
+	"cryptkeeper/internal/modules/win_lnk"
 	"cryptkeeper/internal/modules/win_prefetch"
 	"cryptkeeper/internal/modules/win_registry"
+	"cryptkeeper/internal/modules/win_srum"
+	"cryptkeeper/internal/modules/win_tasks"
 	"cryptkeeper/internal/parse"
 	"cryptkeeper/internal/schema"
 
@@ -158,6 +162,18 @@ func runHarvest(cmd *cobra.Command, args []string) error {
 	winJumpListsModule := win_jumplists.NewWinJumpLists()
 	run.Register(winJumpListsModule)
 	
+	winLNKModule := win_lnk.NewWinLNK()
+	run.Register(winLNKModule)
+	
+	winSRUMModule := win_srum.NewWinSRUM()
+	run.Register(winSRUMModule)
+	
+	winBITSModule := win_bits.NewWinBITS()
+	run.Register(winBITSModule)
+	
+	winTasksModule := win_tasks.NewWinTasks()
+	run.Register(winTasksModule)
+	
 	// Collect module names for output
 	modulesRun := []string{
 		sysInfoModule.Name(), 
@@ -166,6 +182,10 @@ func runHarvest(cmd *cobra.Command, args []string) error {
 		winPrefetchModule.Name(),
 		winAmcacheModule.Name(),
 		winJumpListsModule.Name(),
+		winLNKModule.Name(),
+		winSRUMModule.Name(),
+		winBITSModule.Name(),
+		winTasksModule.Name(),
 	}
 	
 	// Execute all modules
