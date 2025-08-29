@@ -1,26 +1,106 @@
 # cryptkeeper
 
-A DFIR (Digital Forensics and Incident Response) CLI tool for collecting system artifacts and packaging them securely.
+A comprehensive DFIR (Digital Forensics and Incident Response) CLI tool for collecting Windows system artifacts and packaging them securely. Designed for forensic analysts and incident responders who need to rapidly collect critical artifacts from Windows systems.
 
 ## Installation
 
-### Using Make (if available)
+### Prerequisites
 
-```bash
-make build
-```
+- Go 1.22+ installed
+- Git (for cloning the repository)
 
-### Direct Go build
+### Building for Windows (Primary Target)
+
+Cryptkeeper is optimized for Windows systems. Here are multiple ways to build Windows binaries:
+
+#### Option 1: Build on Windows
 
 ```cmd
 REM Download dependencies
 go mod tidy
 
-REM Build the project
+REM Build for Windows (current architecture)
 go build -o bin/cryptkeeper.exe ./cmd/cryptkeeper
+
+REM Build for Windows 64-bit specifically
+set GOOS=windows
+set GOARCH=amd64
+go build -o bin/cryptkeeper-x64.exe ./cmd/cryptkeeper
+
+REM Build for Windows 32-bit
+set GOOS=windows
+set GOARCH=386
+go build -o bin/cryptkeeper-x86.exe ./cmd/cryptkeeper
 ```
 
-Both methods create the binary at `bin/cryptkeeper.exe`.
+#### Option 2: Cross-compile from Linux/macOS
+
+```bash
+# Download dependencies
+go mod tidy
+
+# Build Windows 64-bit binary from Linux/macOS
+GOOS=windows GOARCH=amd64 go build -o bin/cryptkeeper-x64.exe ./cmd/cryptkeeper
+
+# Build Windows 32-bit binary from Linux/macOS
+GOOS=windows GOARCH=386 go build -o bin/cryptkeeper-x86.exe ./cmd/cryptkeeper
+
+# Build Windows ARM64 binary (for newer ARM-based Windows systems)
+GOOS=windows GOARCH=arm64 go build -o bin/cryptkeeper-arm64.exe ./cmd/cryptkeeper
+```
+
+#### Option 3: Using Make (if available)
+
+```bash
+# Default build (creates Windows binary regardless of host platform)
+make build
+
+# Build all Windows architectures
+make build-all-windows
+
+# Build for specific architecture
+make build-windows-x64
+make build-windows-x86
+make build-windows-arm64
+```
+
+#### Option 4: Build Native Binary (for testing on non-Windows)
+
+```bash
+# Build native binary for current platform (Linux/macOS)
+# Note: Only SysInfo module will work on non-Windows systems
+go build -o bin/cryptkeeper ./cmd/cryptkeeper
+```
+
+### Build Output
+
+The build process creates binaries in the `bin/` directory:
+
+- `cryptkeeper.exe` - Main Windows executable (64-bit by default)
+- `cryptkeeper-x64.exe` - Windows 64-bit executable
+- `cryptkeeper-x86.exe` - Windows 32-bit executable  
+- `cryptkeeper-arm64.exe` - Windows ARM64 executable
+- `cryptkeeper` - Native binary for Linux/macOS (limited functionality)
+
+### Deployment to Windows Systems
+
+Once built, the binary can be deployed to Windows systems for artifact collection:
+
+```cmd
+REM Copy to target Windows system
+copy cryptkeeper.exe \\target-system\C$\temp\
+
+REM Run remotely via admin share
+psexec \\target-system C:\temp\cryptkeeper.exe harvest --encrypt-age YOUR_AGE_KEY
+
+REM Or copy via RDP/WinRM and run locally
+cryptkeeper.exe harvest --parallel 8 --out C:\collection
+```
+
+**Requirements on target system:**
+- No additional dependencies (statically linked Go binary)
+- Works on Windows 7, 8, 10, 11, Server 2008+
+- Elevated privileges recommended for full artifact access
 
 ## Usage
 
@@ -76,7 +156,7 @@ Output JSON:
   "age_recipient_set": false,
   "parallelism": 2,
   "module_timeout": "30s",
-  "modules_run": ["sysinfo"],
+  "modules_run": ["sysinfo", "windows/evtx", "windows/registry", "windows/prefetch", "windows/amcache", "windows/jumplists", "windows/lnk", "windows/srum", "windows/bits", "windows/tasks", "windows/services_drivers", "windows/wmi", "windows/firewall_net", "windows/rdp", "windows/usb", "windows/browser", "windows/recyclebin", "windows/iis"],
   "module_results": [
     {
       "name": "sysinfo",
@@ -109,7 +189,7 @@ Output JSON:
   "age_recipient_set": true,
   "parallelism": 4,
   "module_timeout": "1m0s",
-  "modules_run": ["sysinfo"],
+  "modules_run": ["sysinfo", "windows/evtx", "windows/registry", "windows/prefetch", "windows/amcache", "windows/jumplists", "windows/lnk", "windows/srum", "windows/bits", "windows/tasks", "windows/services_drivers", "windows/wmi", "windows/firewall_net", "windows/rdp", "windows/usb", "windows/browser", "windows/recyclebin", "windows/iis"],
   "module_results": [
     {
       "name": "sysinfo",
@@ -154,21 +234,65 @@ REM Error: module-timeout must be positive
 
 ## Collected Artifacts
 
-The current MVP collects:
+Cryptkeeper comprehensively collects critical Windows DFIR artifacts across 18 specialized modules:
 
-### SysInfo Module
+### Core System Information
+- **SysInfo**: Basic system information (OS, arch, hostname, uptime, boot time)
 
-Collects basic system information into `artifacts/sysinfo/sysinfo.json`:
+### Windows Event Logs & Registry
+- **WinEvtx**: Windows Event Logs (Security, System, Application, PowerShell, TaskScheduler, RDP, Sysmon, Defender, DNS)
+- **WinRegistry**: System registry hives (SYSTEM, SOFTWARE, SAM, SECURITY, DEFAULT) and per-user hives (NTUSER.DAT, UsrClass.dat)
 
-```json
-{
-  "os": "windows",
-  "arch": "amd64", 
-  "hostname": "DESKTOP-ABC123",
-  "time_utc": "2025-08-27T12:34:56Z",
-  "uptime_seconds": 123456,
-  "boot_time_utc": "2025-08-25T10:14:20Z"
-}
+### Execution Artifacts
+- **WinPrefetch**: Windows Prefetch files (*.pf) for application execution tracking
+- **WinAmcache**: Application Compatibility cache (Amcache.hve, RecentFileCache.bcf)
+- **WinTasks**: Scheduled Tasks (XML files from C:\Windows\System32\Tasks)
+
+### File System & User Activity
+- **WinJumpLists**: Jump Lists (AutomaticDestinations, CustomDestinations)  
+- **WinLNK**: LNK shortcut files from Recent items and Desktop
+- **WinSRUM**: System Resource Usage Monitor database (SRUDB.dat)
+- **WinRecycleBin**: Recycle Bin artifacts ($I and $R files) from all drives
+
+### Network & External Devices  
+- **WinFirewallNet**: Windows Firewall logs, network configuration (ipconfig, route table)
+- **WinUSB**: USB device installation logs (setupapi.dev.log)
+- **WinRDP**: RDP bitmap cache and configuration files per user profile
+
+### Applications & Services
+- **WinBrowser**: Browser artifacts (Chrome, Edge, Firefox history, cookies, login data)
+- **WinBITS**: Background Intelligent Transfer Service job queue files (qmgr*.dat)
+- **WinServicesDrivers**: System drivers (*.sys files) and driver information (driverquery output)
+- **WinWMI**: WMI repository files and permanent event subscriptions
+- **WinIIS**: IIS web server logs (when installed)
+
+### Collection Features
+- **Smart Size Management**: Configurable file size limits with intelligent truncation
+- **Per-User Enumeration**: Automatically discovers and processes all user profiles  
+- **Privilege Escalation**: Attempts SeBackup/SeRestore privileges for protected files
+- **Graceful Fallbacks**: Multiple collection methods with fallback strategies
+- **Comprehensive Manifests**: Each module generates detailed JSON manifests with file hashes, timestamps, and metadata
+
+### Example Module Output Structure
+```
+artifacts/
+├── sysinfo/sysinfo.json
+├── windows/
+│   ├── evtx/
+│   │   ├── Security.evtx
+│   │   ├── System.evtx
+│   │   └── manifest.json
+│   ├── registry/
+│   │   ├── system_hives/
+│   │   ├── user_hives/
+│   │   └── manifest.json
+│   ├── browser/
+│   │   └── users/
+│   │       ├── alice/
+│   │       │   ├── chrome/Default/History
+│   │       │   └── firefox/profile.default/places.sqlite
+│   │       └── bob/...
+│   └── [other modules...]
 ```
 
 ## Archive Format
@@ -184,8 +308,11 @@ Contents are stored under the `artifacts/` prefix within the archive.
 ### Using Make
 
 ```bash
-# Build the project
+# Build the project (Windows binary)
 make build
+
+# Build all Windows architectures
+make build-all-windows
 
 # Run tests
 make test
@@ -199,18 +326,45 @@ make clean
 
 ### Direct Go commands
 
-```cmd
-REM Build the project
-go build -o bin/cryptkeeper.exe ./cmd/cryptkeeper
+```bash
+# Cross-compile for Windows from any platform
+GOOS=windows GOARCH=amd64 go build -o bin/cryptkeeper.exe ./cmd/cryptkeeper
 
-REM Run tests
+# Build native binary for development/testing
+go build -o bin/cryptkeeper ./cmd/cryptkeeper
+
+# Run tests (cross-platform)
 go test ./...
 
-REM Run linter
+# Run linter and static analysis
 go vet ./...
+golangci-lint run  # If golangci-lint is installed
 
-REM Download dependencies
+# Download and update dependencies
 go mod tidy
+
+# Build with race detection (for development)
+go build -race -o bin/cryptkeeper-debug ./cmd/cryptkeeper
+
+# Build optimized release binary
+go build -ldflags="-s -w" -o bin/cryptkeeper-release.exe ./cmd/cryptkeeper
+```
+
+### Development Workflow
+
+```bash
+# 1. Make changes to code
+# 2. Run tests to ensure functionality
+go test ./...
+
+# 3. Build and test on target platform
+GOOS=windows GOARCH=amd64 go build -o bin/cryptkeeper.exe ./cmd/cryptkeeper
+
+# 4. Test basic functionality (if on Windows)
+bin/cryptkeeper.exe harvest --help
+
+# 5. Run static analysis
+go vet ./...
 ```
 
 ## Project Structure
@@ -232,12 +386,29 @@ go mod tidy
     │   ├── pack.go                     # Bundling and encryption
     │   └── util.go                     # Utility functions
     ├── modules/
-    │   └── sysinfo/
-    │       ├── sysinfo.go              # SysInfo module (cross-platform)
-    │       ├── sysinfo_linux.go        # Linux uptime implementation
-    │       ├── sysinfo_windows.go      # Windows uptime implementation  
-    │       ├── sysinfo_darwin.go       # macOS uptime implementation
-    │       └── sysinfo_other.go        # Fallback for other OSes
+    │   ├── sysinfo/                    # Cross-platform system information
+    │   ├── win_evtx/                   # Windows Event Logs collection
+    │   ├── win_registry/               # Windows Registry hives
+    │   ├── win_prefetch/               # Windows Prefetch files
+    │   ├── win_amcache/                # Application Compatibility cache
+    │   ├── win_jumplists/              # Windows Jump Lists
+    │   ├── win_lnk/                    # Windows LNK shortcut files
+    │   ├── win_srum/                   # System Resource Usage Monitor
+    │   ├── win_bits/                   # Background Intelligent Transfer Service
+    │   ├── win_tasks/                  # Windows Scheduled Tasks
+    │   ├── win_services_drivers/       # System drivers and services
+    │   ├── win_wmi/                    # WMI repository and subscriptions
+    │   ├── win_firewall_net/           # Windows Firewall and network config
+    │   ├── win_rdp/                    # RDP artifacts and bitmap cache
+    │   ├── win_usb/                    # USB device installation logs
+    │   ├── win_browser/                # Browser artifacts (Chrome/Edge/Firefox)
+    │   ├── win_recyclebin/             # Recycle Bin artifacts
+    │   └── win_iis/                    # IIS web server logs
+    ├── winutil/                        # Windows-specific utilities
+    │   ├── privileges_windows.go       # Privilege escalation helpers
+    │   ├── filecopy_windows.go         # File copying with backup semantics
+    │   ├── process_windows.go          # Command execution helpers
+    │   └── sizecaps.go                 # Size constraint management
     ├── parse/
     │   ├── since.go                    # Time parsing utilities
     │   ├── validate.go                 # Validation functions
@@ -252,9 +423,36 @@ go mod tidy
 - **[filippo.io/age](https://filippo.io/age)**: Age encryption library
 - **[golang.org/x/sys](https://golang.org/x/sys)**: System call extensions
 
+## Platform Compatibility
+
+Cryptkeeper is built with Go and compiles cross-platform, but is optimized for Windows DFIR:
+
+- **Windows**: Full functionality with all 18 collection modules
+- **Linux/macOS**: Basic SysInfo module only (Windows modules are no-op)
+- **Cross-compilation**: Build Windows binaries from any platform
+
+## Use Cases
+
+### Incident Response
+- Rapid triage collection from compromised Windows systems
+- Remote deployment via admin shares or EDR tools
+- Automated collection with encryption for secure transport
+
+### Digital Forensics  
+- Comprehensive artifact collection for forensic analysis
+- Timeline reconstruction support via extensive metadata
+- Preserved file hashes for evidence integrity
+
+### Compliance & Audit
+- System state documentation and evidence collection
+- Secure packaging with age encryption for data protection
+- Detailed manifests for audit trails
+
 ## Security Notes
 
 - Age encryption uses X25519 public keys for secure artifact encryption
 - Temporary directories are automatically cleaned up (unless `--keep-tmp` is used)
 - All file operations use streaming I/O to minimize memory usage
 - Module execution is isolated with individual timeouts and error handling
+- Backup privileges automatically enabled when available for protected files
+- No network communication - fully offline operation

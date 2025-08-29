@@ -5,7 +5,10 @@ package winutil
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -89,4 +92,30 @@ func GetSystemInfo(ctx context.Context) (map[string]string, error) {
 	}
 	
 	return info, nil
+}
+
+// RunCommandWithOutput executes a command and returns its output as bytes.
+// This is a simplified wrapper around ExecWithContext for modules that just need stdout.
+func RunCommandWithOutput(ctx context.Context, name string, args []string) ([]byte, error) {
+	stdout, stderr, err := ExecWithContext(ctx, name, args...)
+	if err != nil {
+		return nil, fmt.Errorf("command %s failed: %w (stderr: %s)", name, err, string(stderr))
+	}
+	return stdout, nil
+}
+
+// HashFile calculates the SHA-256 hash of a file.
+func HashFile(filePath string) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, file); err != nil {
+		return "", fmt.Errorf("failed to hash file: %w", err)
+	}
+
+	return fmt.Sprintf("%x", hasher.Sum(nil)), nil
 }

@@ -14,13 +14,21 @@ import (
 	"cryptkeeper/internal/modules/sysinfo"
 	"cryptkeeper/internal/modules/win_amcache"
 	"cryptkeeper/internal/modules/win_bits"
+	"cryptkeeper/internal/modules/win_browser"
 	"cryptkeeper/internal/modules/win_evtx"
+	"cryptkeeper/internal/modules/win_firewall_net"
+	"cryptkeeper/internal/modules/win_iis"
 	"cryptkeeper/internal/modules/win_jumplists"
 	"cryptkeeper/internal/modules/win_lnk"
 	"cryptkeeper/internal/modules/win_prefetch"
+	"cryptkeeper/internal/modules/win_rdp"
+	"cryptkeeper/internal/modules/win_recyclebin"
 	"cryptkeeper/internal/modules/win_registry"
+	"cryptkeeper/internal/modules/win_services_drivers"
 	"cryptkeeper/internal/modules/win_srum"
 	"cryptkeeper/internal/modules/win_tasks"
+	"cryptkeeper/internal/modules/win_usb"
+	"cryptkeeper/internal/modules/win_wmi"
 	"cryptkeeper/internal/parse"
 	"cryptkeeper/internal/schema"
 
@@ -174,6 +182,30 @@ func runHarvest(cmd *cobra.Command, args []string) error {
 	winTasksModule := win_tasks.NewWinTasks()
 	run.Register(winTasksModule)
 	
+	winServicesDriversModule := win_services_drivers.NewWinServicesDrivers()
+	run.Register(winServicesDriversModule)
+	
+	winWMIModule := win_wmi.NewWinWMI()
+	run.Register(winWMIModule)
+	
+	winFirewallNetModule := win_firewall_net.NewWinFirewallNet()
+	run.Register(winFirewallNetModule)
+	
+	winRDPModule := win_rdp.NewWinRDP()
+	run.Register(winRDPModule)
+	
+	winUSBModule := win_usb.NewWinUSB()
+	run.Register(winUSBModule)
+	
+	winBrowserModule := win_browser.NewWinBrowser()
+	run.Register(winBrowserModule)
+	
+	winRecycleBinModule := win_recyclebin.NewWinRecycleBin()
+	run.Register(winRecycleBinModule)
+	
+	winIISModule := win_iis.NewWinIIS()
+	run.Register(winIISModule)
+	
 	// Collect module names for output
 	modulesRun := []string{
 		sysInfoModule.Name(), 
@@ -186,6 +218,14 @@ func runHarvest(cmd *cobra.Command, args []string) error {
 		winSRUMModule.Name(),
 		winBITSModule.Name(),
 		winTasksModule.Name(),
+		winServicesDriversModule.Name(),
+		winWMIModule.Name(),
+		winFirewallNetModule.Name(),
+		winRDPModule.Name(),
+		winUSBModule.Name(),
+		winBrowserModule.Name(),
+		winRecycleBinModule.Name(),
+		winIISModule.Name(),
 	}
 	
 	// Execute all modules
