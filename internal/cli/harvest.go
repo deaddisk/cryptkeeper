@@ -12,22 +12,40 @@ import (
 
 	"cryptkeeper/internal/core"
 	"cryptkeeper/internal/modules/sysinfo"
+	"cryptkeeper/internal/modules/win_ads"
 	"cryptkeeper/internal/modules/win_amcache"
+	"cryptkeeper/internal/modules/win_applications"
 	"cryptkeeper/internal/modules/win_bits"
 	"cryptkeeper/internal/modules/win_browser"
+	"cryptkeeper/internal/modules/win_certificates"
 	"cryptkeeper/internal/modules/win_evtx"
+	"cryptkeeper/internal/modules/win_fileshares"
 	"cryptkeeper/internal/modules/win_firewall_net"
 	"cryptkeeper/internal/modules/win_iis"
 	"cryptkeeper/internal/modules/win_jumplists"
+	"cryptkeeper/internal/modules/win_kerberos"
 	"cryptkeeper/internal/modules/win_lnk"
+	"cryptkeeper/internal/modules/win_logon"
+	"cryptkeeper/internal/modules/win_lsa"
+	"cryptkeeper/internal/modules/win_memory_process"
+	"cryptkeeper/internal/modules/win_mft"
+	"cryptkeeper/internal/modules/win_modern"
+	"cryptkeeper/internal/modules/win_networkinfo"
+	"cryptkeeper/internal/modules/win_persistence"
 	"cryptkeeper/internal/modules/win_prefetch"
 	"cryptkeeper/internal/modules/win_rdp"
 	"cryptkeeper/internal/modules/win_recyclebin"
 	"cryptkeeper/internal/modules/win_registry"
 	"cryptkeeper/internal/modules/win_services_drivers"
+	"cryptkeeper/internal/modules/win_signatures"
 	"cryptkeeper/internal/modules/win_srum"
+	"cryptkeeper/internal/modules/win_systemconfig"
 	"cryptkeeper/internal/modules/win_tasks"
+	"cryptkeeper/internal/modules/win_tokens"
+	"cryptkeeper/internal/modules/win_trustedinstaller"
 	"cryptkeeper/internal/modules/win_usb"
+	"cryptkeeper/internal/modules/win_usn"
+	"cryptkeeper/internal/modules/win_vss"
 	"cryptkeeper/internal/modules/win_wmi"
 	"cryptkeeper/internal/parse"
 	"cryptkeeper/internal/schema"
@@ -205,6 +223,61 @@ func runHarvest(cmd *cobra.Command, args []string) error {
 	
 	winIISModule := win_iis.NewWinIIS()
 	run.Register(winIISModule)
+
+	// Register new artifact collection modules
+	winNetworkInfoModule := win_networkinfo.NewWinNetworkInfo()
+	run.Register(winNetworkInfoModule)
+
+	winSystemConfigModule := win_systemconfig.NewWinSystemConfig()
+	run.Register(winSystemConfigModule)
+
+	winMemoryProcessModule := win_memory_process.NewWinMemoryProcess()
+	run.Register(winMemoryProcessModule)
+
+	winApplicationsModule := win_applications.NewWinApplications()
+	run.Register(winApplicationsModule)
+
+	winPersistenceModule := win_persistence.NewWinPersistence()
+	run.Register(winPersistenceModule)
+
+	winModernModule := win_modern.NewWinModern()
+	run.Register(winModernModule)
+
+	winMFTModule := win_mft.NewWinMFT()
+	run.Register(winMFTModule)
+
+	winUSNModule := win_usn.NewWinUSN()
+	run.Register(winUSNModule)
+
+	winVSSModule := win_vss.NewWinVSS()
+	run.Register(winVSSModule)
+
+	winFileSharesModule := win_fileshares.NewWinFileShares()
+	run.Register(winFileSharesModule)
+
+	winLSAModule := win_lsa.NewWinLSA()
+	run.Register(winLSAModule)
+
+	winKerberosModule := win_kerberos.NewWinKerberos()
+	run.Register(winKerberosModule)
+
+	winLogonModule := win_logon.NewWinLogon()
+	run.Register(winLogonModule)
+
+	winTokensModule := win_tokens.NewWinTokens()
+	run.Register(winTokensModule)
+
+	winADSModule := win_ads.NewWinADS()
+	run.Register(winADSModule)
+
+	winSignaturesModule := win_signatures.NewWinSignatures()
+	run.Register(winSignaturesModule)
+
+	winCertificatesModule := win_certificates.NewWinCertificates()
+	run.Register(winCertificatesModule)
+
+	winTrustedInstallerModule := win_trustedinstaller.NewWinTrustedInstaller()
+	run.Register(winTrustedInstallerModule)
 	
 	// Collect module names for output
 	modulesRun := []string{
@@ -226,6 +299,25 @@ func runHarvest(cmd *cobra.Command, args []string) error {
 		winBrowserModule.Name(),
 		winRecycleBinModule.Name(),
 		winIISModule.Name(),
+		// New artifact collection modules
+		winNetworkInfoModule.Name(),
+		winSystemConfigModule.Name(),
+		winMemoryProcessModule.Name(),
+		winApplicationsModule.Name(),
+		winPersistenceModule.Name(),
+		winModernModule.Name(),
+		winMFTModule.Name(),
+		winUSNModule.Name(),
+		winVSSModule.Name(),
+		winFileSharesModule.Name(),
+		winLSAModule.Name(),
+		winKerberosModule.Name(),
+		winLogonModule.Name(),
+		winTokensModule.Name(),
+		winADSModule.Name(),
+		winSignaturesModule.Name(),
+		winCertificatesModule.Name(),
+		winTrustedInstallerModule.Name(),
 	}
 	
 	// Execute all modules

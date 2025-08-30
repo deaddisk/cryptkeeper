@@ -156,7 +156,7 @@ Output JSON:
   "age_recipient_set": false,
   "parallelism": 2,
   "module_timeout": "30s",
-  "modules_run": ["sysinfo", "windows/evtx", "windows/registry", "windows/prefetch", "windows/amcache", "windows/jumplists", "windows/lnk", "windows/srum", "windows/bits", "windows/tasks", "windows/services_drivers", "windows/wmi", "windows/firewall_net", "windows/rdp", "windows/usb", "windows/browser", "windows/recyclebin", "windows/iis"],
+  "modules_run": ["sysinfo", "windows/evtx", "windows/registry", "windows/prefetch", "windows/amcache", "windows/jumplists", "windows/lnk", "windows/srum", "windows/bits", "windows/tasks", "windows/services_drivers", "windows/wmi", "windows/firewall_net", "windows/rdp", "windows/usb", "windows/browser", "windows/recyclebin", "windows/iis", "windows/networkinfo", "windows/systemconfig", "windows/memory_process", "windows/applications", "windows/persistence", "windows/modern", "windows/mft", "windows/usn", "windows/vss", "windows/fileshares", "windows/lsa", "windows/kerberos", "windows/logon", "windows/tokens", "windows/ads", "windows/signatures", "windows/certificates", "windows/trustedinstaller"],
   "module_results": [
     {
       "name": "sysinfo",
@@ -189,7 +189,7 @@ Output JSON:
   "age_recipient_set": true,
   "parallelism": 4,
   "module_timeout": "1m0s",
-  "modules_run": ["sysinfo", "windows/evtx", "windows/registry", "windows/prefetch", "windows/amcache", "windows/jumplists", "windows/lnk", "windows/srum", "windows/bits", "windows/tasks", "windows/services_drivers", "windows/wmi", "windows/firewall_net", "windows/rdp", "windows/usb", "windows/browser", "windows/recyclebin", "windows/iis"],
+  "modules_run": ["sysinfo", "windows/evtx", "windows/registry", "windows/prefetch", "windows/amcache", "windows/jumplists", "windows/lnk", "windows/srum", "windows/bits", "windows/tasks", "windows/services_drivers", "windows/wmi", "windows/firewall_net", "windows/rdp", "windows/usb", "windows/browser", "windows/recyclebin", "windows/iis", "windows/networkinfo", "windows/systemconfig", "windows/memory_process", "windows/applications", "windows/persistence", "windows/modern", "windows/mft", "windows/usn", "windows/vss", "windows/fileshares", "windows/lsa", "windows/kerberos", "windows/logon", "windows/tokens", "windows/ads", "windows/signatures", "windows/certificates", "windows/trustedinstaller"],
   "module_results": [
     {
       "name": "sysinfo",
@@ -234,7 +234,7 @@ REM Error: module-timeout must be positive
 
 ## Collected Artifacts
 
-Cryptkeeper comprehensively collects critical Windows DFIR artifacts across 18 specialized modules:
+Cryptkeeper comprehensively collects critical Windows DFIR artifacts across 35+ specialized modules organized into 9 categories:
 
 ### Core System Information
 - **SysInfo**: Basic system information (OS, arch, hostname, uptime, boot time)
@@ -258,6 +258,7 @@ Cryptkeeper comprehensively collects critical Windows DFIR artifacts across 18 s
 - **WinFirewallNet**: Windows Firewall logs, network configuration (ipconfig, route table)
 - **WinUSB**: USB device installation logs (setupapi.dev.log)
 - **WinRDP**: RDP bitmap cache and configuration files per user profile
+- **WinNetworkInfo**: Comprehensive network configuration (DNS cache, ARP table, netstat, SMB shares)
 
 ### Applications & Services
 - **WinBrowser**: Browser artifacts (Chrome, Edge, Firefox history, cookies, login data)
@@ -265,6 +266,33 @@ Cryptkeeper comprehensively collects critical Windows DFIR artifacts across 18 s
 - **WinServicesDrivers**: System drivers (*.sys files) and driver information (driverquery output)
 - **WinWMI**: WMI repository files and permanent event subscriptions
 - **WinIIS**: IIS web server logs (when installed)
+- **WinApplications**: Application-specific artifacts (Office recent files, Skype databases, Teams configs, Outlook metadata, Windows Defender logs)
+
+### System Configuration & Memory
+- **WinSystemConfig**: System configuration (services, startup programs, environment variables, timezone, hosts file)
+- **WinMemoryProcess**: Memory and process artifacts (detailed process info, handles, memory info, virtual memory metadata)
+
+### Persistence & Malware Hunting
+- **WinPersistence**: Persistence mechanisms (autorun locations, thumbnail cache, icon cache, ShellBags info, COM objects)
+- **WinModern**: Cloud & modern Windows artifacts (OneDrive logs/settings, Cortana data, Timeline database, clipboard history, Store apps)
+
+### File System Deep Analysis
+- **WinMFT**: NTFS Master File Table metadata and volume information
+- **WinUSN**: NTFS USN Journal information and change tracking
+- **WinVSS**: Volume Shadow Copy Service information and metadata
+- **WinFileShares**: File shares configuration, permissions, and active sessions
+
+### Authentication & Security
+- **WinLSA**: LSA policy information and security settings
+- **WinKerberos**: Kerberos tickets and authentication configuration
+- **WinLogon**: Logon sessions and authentication history
+- **WinTokens**: Access tokens and privileges information
+
+### Forensic Metadata
+- **WinADS**: Alternate Data Streams detection and analysis
+- **WinSignatures**: File signatures and digital certificate verification
+- **WinCertificates**: Certificate stores and PKI configuration
+- **WinTrustedInstaller**: TrustedInstaller service and system integrity information
 
 ### Collection Features
 - **Smart Size Management**: Configurable file size limits with intelligent truncation
@@ -403,7 +431,25 @@ go vet ./...
     │   ├── win_usb/                    # USB device installation logs
     │   ├── win_browser/                # Browser artifacts (Chrome/Edge/Firefox)
     │   ├── win_recyclebin/             # Recycle Bin artifacts
-    │   └── win_iis/                    # IIS web server logs
+    │   ├── win_iis/                    # IIS web server logs
+    │   ├── win_networkinfo/            # Network configuration and DNS cache
+    │   ├── win_systemconfig/           # System configuration and services
+    │   ├── win_memory_process/         # Memory and process artifacts
+    │   ├── win_applications/           # Application-specific artifacts
+    │   ├── win_persistence/            # Persistence mechanisms and malware hunting
+    │   ├── win_modern/                 # Cloud and modern Windows artifacts
+    │   ├── win_mft/                    # NTFS Master File Table metadata
+    │   ├── win_usn/                    # NTFS USN Journal information
+    │   ├── win_vss/                    # Volume Shadow Copy Service
+    │   ├── win_fileshares/             # File shares and permissions
+    │   ├── win_lsa/                    # LSA policy and authentication
+    │   ├── win_kerberos/               # Kerberos tickets and configuration
+    │   ├── win_logon/                  # Logon sessions and authentication history
+    │   ├── win_tokens/                 # Access tokens and privileges
+    │   ├── win_ads/                    # Alternate Data Streams detection
+    │   ├── win_signatures/             # File signatures and digital certificates
+    │   ├── win_certificates/           # Certificate stores and PKI
+    │   └── win_trustedinstaller/       # TrustedInstaller and system integrity
     ├── winutil/                        # Windows-specific utilities
     │   ├── privileges_windows.go       # Privilege escalation helpers
     │   ├── filecopy_windows.go         # File copying with backup semantics
@@ -427,7 +473,7 @@ go vet ./...
 
 Cryptkeeper is built with Go and compiles cross-platform, but is optimized for Windows DFIR:
 
-- **Windows**: Full functionality with all 18 collection modules
+- **Windows**: Full functionality with 35+ specialized collection modules
 - **Linux/macOS**: Basic SysInfo module only (Windows modules are no-op)
 - **Cross-compilation**: Build Windows binaries from any platform
 
